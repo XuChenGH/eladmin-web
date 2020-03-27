@@ -116,7 +116,11 @@
               type="selection"
               width="55">
       </el-table-column>
-      <el-table-column prop="productId" label="产品名称"/>
+      <el-table-column prop="productId"  label="产品名称">
+        <template slot-scope="scope">
+          <div>{{getDictCaption(scope.row.productId,dict.product_id)}}</div>
+        </template>
+      </el-table-column>
       <el-table-column prop="versionNo" label="版本号"/>
       <el-table-column prop="versionType" label="版本类型">
         <template slot-scope="scope">
@@ -163,7 +167,7 @@
       layout="total, prev, pager, next, sizes"
       @size-change="sizeChange"
       @current-change="pageChange"/>
-    <right-menu ref="rightMenu" @copyClick="copyClick"/>
+    <right-menu ref="rightMenu" :menu="menu"/>
   </div>
 </template>
 
@@ -182,7 +186,7 @@ export default {
   data() {
     return {
       delLoading: false,
-      uploadApi:'api/product/upload',
+      uploadApi:'api/product',
       multipleSelection:[],
       form: {
         id: '',
@@ -193,7 +197,13 @@ export default {
         releaseStatus: '',
         releaseTime: null,
         memo: ''
-      }
+      },
+      menu:[
+        {
+          title:'复制新增',
+          click:this.copyClick
+        }
+      ]
     }
   },
   created() {
@@ -270,7 +280,7 @@ export default {
         }
         data = this.multipleSelection ;
       }
-      this.openFullScreen('产品信息列表');
+      this.openFullScreen('导出','产品信息列表');
       downloadProduct(data).then(result => {
         downloadFile(result, '产品信息列表', 'xlsx')
         this.loadingInstance.close();

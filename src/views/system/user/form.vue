@@ -8,7 +8,7 @@
         <el-radio v-for="item in dicts" :key="item.id" v-model="form.enabled" :label="item.value">{{ item.label }}</el-radio>
       </el-form-item>
       <el-form-item label="电话" prop="phone">
-        <el-input v-model.number="form.phone" />
+        <el-input v-model="form.phone" @input="phoneFormat(form.phone)" />
       </el-form-item>
       <el-form-item label="邮箱" prop="email">
         <el-input v-model="form.email" />
@@ -25,12 +25,21 @@
             :value="item.id"/>
         </el-select>
       </el-form-item>
-      <el-form-item style="margin-bottom: 0px;" label="角色">
+      <el-form-item  label="角色">
         <el-select v-model="roleIds" style="width: 450px;" multiple placeholder="请选择">
           <el-option
             v-for="(item, index) in roles"
             :disabled="level !== 1 && item.level <= level"
             :key="item.name + index"
+            :label="item.name"
+            :value="item.id"/>
+        </el-select>
+      </el-form-item>
+      <el-form-item style="margin-bottom: 0px;" label="业务权限">
+        <el-select v-model="permissionIds" style="width: 450px;" multiple placeholder="请选择">
+          <el-option
+            v-for="(item, index) in dataPermissions"
+            :key="index"
             :label="item.name"
             :value="item.id"/>
         </el-select>
@@ -48,6 +57,7 @@
 import { add, edit } from '@/api/user'
 import { getDepts } from '@/api/dept'
 import { getAll, getLevel } from '@/api/role'
+import { getDataPermission } from  '@/api/dataPermission'
 import { getAllJob } from '@/api/job'
 import Treeselect from '@riophae/vue-treeselect'
 import '@riophae/vue-treeselect/dist/vue-treeselect.css'
@@ -74,7 +84,7 @@ export default {
       }
     }
     return {
-      dialog: false, loading: false, form: { username: '', email: '', enabled: 'false', roles: [], job: { id: '' }, dept: { id: '' }, phone: null },
+      dialog: false, loading: false, form: { username: '', email: '', enabled: 'false', roles: [], job: { id: '' }, dept: { id: '' }, phone: null, dataPermissions:[] },
       roleIds: [], roles: [], depts: [], deptId: null, jobId: null, jobs: [], level: 3,
       rules: {
         username: [
@@ -91,10 +101,18 @@ export default {
         enabled: [
           { required: true, message: '状态不能为空', trigger: 'blur' }
         ]
-      }
+      },
+      dataPermissions:[],
+      permissionIds:[]
     }
   },
+  watch:{
+
+  },
   methods: {
+     phoneFormat:function (phone) {
+       this.form.phone = phone.toString().replace(/\+86-/,'');
+    },
     cancel() {
       this.resetForm()
     },
@@ -121,10 +139,15 @@ export default {
           } else {
             this.loading = true
             this.form.roles = []
+            this.form.dataPermissions = []
             const _this = this
             this.roleIds.forEach(function(data, index) {
               const role = { id: data }
               _this.form.roles.push(role)
+            })
+            this.permissionIds.forEach((item)=>{
+              const dataPermission = { id: item};
+              _this.form.dataPermissions.push(dataPermission);
             })
             if (this.isAdd) {
               this.doAdd()
@@ -172,7 +195,8 @@ export default {
       this.deptId = null
       this.jobId = null
       this.roleIds = []
-      this.form = { username: '', email: '', enabled: 'false', roles: [], job: { id: '' }, dept: { id: '' }, phone: null }
+      this.permissionIds = []
+      this.form = { username: '', email: '', enabled: 'false', roles: [], job: { id: '' }, dept: { id: '' }, phone: null, dataPermissions:[] }
     },
     getRoles() {
       getAll().then(res => {
@@ -191,6 +215,11 @@ export default {
     getDepts() {
       getDepts({ enabled: true }).then(res => {
         this.depts = res.content
+      })
+    },
+    getPermission(){
+      getDataPermission().then(res=>{
+         this.dataPermissions = res.content;
       })
     },
     isvalidPhone(str) {
